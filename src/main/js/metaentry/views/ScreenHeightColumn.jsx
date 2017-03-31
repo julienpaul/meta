@@ -1,6 +1,13 @@
-module.exports = React.createClass({
-	componentDidMount: function(){
-		var self = this;
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+
+export default class ScreenHeightColumn extends Component{
+	constructor(props) {
+		super(props);
+	}
+
+	componentDidMount(){
+		const self = this;
 		self.ensureScreenHeight();
 		this.resizeListener = _.throttle(
 			function(){
@@ -9,13 +16,15 @@ module.exports = React.createClass({
 			200,
 			{leading: false}
 		),
-		window.addEventListener("resize", this.resizeListener);
-	},
-	componentWillUnmount: function(){
+			window.addEventListener("resize", this.resizeListener);
+	}
+
+	componentWillUnmount(){
 		window.removeEventListener("resize", this.resizeListener);
-	},
-	ensureScreenHeight: function(){
-		var listElem = React.findDOMNode(this);
+	}
+
+	ensureScreenHeight(){
+		var listElem = ReactDOM.findDOMNode(this);
 
 		var listRect = listElem.getBoundingClientRect();
 		var panelRect = listElem.parentElement.parentElement.getBoundingClientRect();
@@ -25,10 +34,11 @@ module.exports = React.createClass({
 		var desiredHeight = window.innerHeight - totalMargin - 10;
 
 		listElem.style.height = desiredHeight + "px";
-	},
-	render: function(){
+	}
+
+	render(){
 		return <div className={this.props.className} style={{overflowY: "auto", overflowX: "hidden"}}>
 			{this.props.children}
 		</div>;
 	}
-});
+}

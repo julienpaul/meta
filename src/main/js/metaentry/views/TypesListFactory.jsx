@@ -1,38 +1,42 @@
-var capped = require('../utils.js').ensureLength(30);
-var Widget = require('./widgets/Widget.jsx');
-var ScreenHeightColumn = require('./ScreenHeightColumn.jsx');
+import React, { Component } from 'react';
+import ensureLength from '../utils';
+import Widget from './widgets/Widget.jsx';
+import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 
-module.exports = function(typesStore, chooseTypeAction){
+const capped = ensureLength.ensureLength(30);
 
-	return React.createClass({
+export default class TypesListFactory extends Component{
+	constructor(props) {
+		super(props);
+	}
 
-		mixins: [Reflux.connect(typesStore)],
+	render(){
+		const props = this.props;
+		console.log({props});
 
-		render: function(){
-			var self = this;
+		return (
+			<div>
+				<Widget widgetType="primary" widgetTitle="Types">
+					<ScreenHeightColumn>
+						<div className="list-group">{
 
-			return <Widget widgetType="primary" widgetTitle="Types">
-				<ScreenHeightColumn>
-					<div className="list-group">{
+							props.types.map(function(theType){
 
-						this.state.types.map(function(theType){
+								var clickHandler = _.partial(chooseTypeAction, theType.uri);
+								var isChosen = (theType.uri == props.chosen);
+								var fullName = theType.displayName;
 
-							var clickHandler = _.partial(chooseTypeAction, theType.uri);
-							var isChosen = (theType.uri == self.state.chosen);
-							var fullName = theType.displayName;
+								return <li
+									className={"cp-lnk list-group-item list-group-item-" + (isChosen ? "info" : "default")}
+									key={theType.uri} title={fullName} onClick={clickHandler}>
+									{capped(fullName)}
+								</li>;
+							})
 
-							return <li
-								className={"cp-lnk list-group-item list-group-item-" + (isChosen ? "info" : "default")}
-								key={theType.uri} title={fullName} onClick={clickHandler}>
-								{capped(fullName)}
-							</li>;
-						})
-				
-					}</div>
-				</ScreenHeightColumn>
-			</Widget>;
-		}
-
-	});
+						}</div>
+					</ScreenHeightColumn>
+				</Widget>
+			</div>
+		);
+	}
 }
-

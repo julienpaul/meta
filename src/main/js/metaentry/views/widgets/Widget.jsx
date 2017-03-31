@@ -1,17 +1,21 @@
-var WidgetButton = require('./WidgetButton.jsx');
+import React, { Component } from 'react';
+import WidgetButton from './WidgetButton.jsx';
 
-module.exports = React.createClass({
+export default class Widget extends Component {
+	constructor(props) {
+		super(props);
+	}
 
-	render: function(){
-
-		var cssClasses = "panel panel-" + this.props.widgetType;
-		var buttons = this.props.buttons || [];
+	render() {
+		const props = this.props;
+		const cssClasses = "panel panel-" + props.widgetType;
+		const buttons = props.buttons || [];
 
 		return <div className={cssClasses}>
 
-			<div className="panel-heading" title={this.props.headerTitle}>
+			<div className="panel-heading" title={props.headerTitle}>
 
-				<h3 style={{display: "inline"}} className="panel-title">{this.props.widgetTitle}</h3>
+				<h3 style={{display: "inline"}} className="panel-title">{props.widgetTitle}</h3>
 
 				<div style={{display: "inline", float: "right"}}>{
 					_.map(buttons, function(buttProps, i){
@@ -22,10 +26,8 @@ module.exports = React.createClass({
 
 			</div>
 
-			<div className="panel-body">{this.props.children}</div>
+			<div className="panel-body">{props.children}</div>
 
 		</div>;
 	}
-
-});
-
+}

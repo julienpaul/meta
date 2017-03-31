@@ -1,5 +1,5 @@
 export default {
-	ensureLength: function(maxLength){
+	ensureLength: maxLength => {
 		var actualMax = maxLength - 3;
 		return function(str){
 			return str.length <= maxLength
