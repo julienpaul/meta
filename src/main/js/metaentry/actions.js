@@ -14,7 +14,7 @@ function failWithError(error){
 
 export const fetchClasses = dispatch => {
 	listClasses().then(
-		(types) => dispatch({type: FETCHED_CLASSES, types}),
+		types => dispatch({type: FETCHED_CLASSES, types}),
 		err => dispatch(failWithError(err))
 	);
 };
