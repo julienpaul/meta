@@ -48,11 +48,15 @@ class Rdf4jInstanceServer(repo: Repository, val readContexts: Seq[IRI], val writ
 		})
 	)
 
-	def filterNotContainedStatements(statements: TraversableOnce[Statement]): Seq[Statement] = {
+	def filterNotContainedStatements(stats: TraversableOnce[Statement]): Seq[Statement] = stats.filter{st =>
+		println(s"Checking statement $st from " + Thread.currentThread.getName)
 		repo.accessEagerly{ conn =>
-			statements.filter(st => !conn.hasStatement(st, false, readContexts :_*)).toIndexedSeq
+			val res = !conn.hasStatement(st, false, readContexts :_*)
+			println(s"... $res")
+			res
 		}
-	}
+	}.toIndexedSeq
+
 
 	def writeContextsView = new Rdf4jInstanceServer(repo, writeContexts, writeContexts)
 

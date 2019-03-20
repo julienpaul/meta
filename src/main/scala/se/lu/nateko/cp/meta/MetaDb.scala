@@ -38,7 +38,7 @@ import se.lu.nateko.cp.meta.utils.rdf4j.EnrichedValueFactory
 import se.lu.nateko.cp.meta.services.sparql.magic.MagicTupleFuncSail
 import se.lu.nateko.cp.meta.services.sparql.magic.stats.StatsPlugin
 import se.lu.nateko.cp.meta.instanceserver.WriteNotifyingInstanceServer
-
+import com.ontotext.graphdb.example.util.EmbeddedGraphDB
 
 class MetaDb (
 	val instanceServers: Map[String, InstanceServer],
@@ -96,29 +96,21 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 	def apply(config0: CpmetaConfig): Future[MetaDb] = {
 
 		validateConfig(config0)
-		import system.dispatcher
 
-		val (repo, didNotExist) = makeInitRepo(config0.rdfStorage)
+		val exeServ = java.util.concurrent.Executors.newSingleThreadExecutor
+		implicit val ctxt = ExecutionContext.fromExecutorService(exeServ)
+		implicit val _ = config0.core.envriConfigs
 
-		val config = if(didNotExist)
-				config0.copy(rdfStorage = config0.rdfStorage.copy(recreateAtStartup = true))
-			else config0
+		val ontosFut = Future{makeOntos(config0.onto.ontologies)}(system.dispatcher)
 
-		val ontosFut = Future{makeOntos(config.onto.ontologies)}
-
-		implicit val _ = config.core.envriConfigs
-
-		val serversFut = {
-			val exeServ = java.util.concurrent.Executors.newSingleThreadExecutor
-			val ctxt = ExecutionContext.fromExecutorService(exeServ)
-			makeInstanceServers(repo, Ingestion.allProviders, config)(ctxt).andThen{
-				case _ =>
-					ctxt.shutdown()
-					log.info("instance servers created")
-			}(system.dispatcher)
-		}
-
-		for(instanceServers <- serversFut; ontos <-ontosFut) yield{
+		val metaDbFut: Future[MetaDb] = for(
+			(repo, didNotExist) <- Future{makeInitRepo(config0.rdfStorage)};
+			config = if(didNotExist)
+					config0.copy(rdfStorage = config0.rdfStorage.copy(recreateAtStartup = true))
+				else config0;
+			instanceServers <- makeInstanceServers(repo, Ingestion.allProviders, config);
+			ontos <- ontosFut
+		) yield {
 			val instOntos = config.onto.instOntoServers.map{
 				case (servId, servConf) =>
 					val instServer = instanceServers(servConf.instanceServerId)
@@ -142,6 +134,13 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 
 			new MetaDb(instanceServers, instOntos, uploadService, labelingService, fileService, sparqlServer, repo, config)
 		}
+
+		metaDbFut.andThen{
+			case _ =>
+				ctxt.shutdown()
+				log.info("instance servers created")
+		}(system.dispatcher)
+
 	}
 
 	private def makeInitRepo(config: RdfStorageConfig): (Repository, Boolean) = {
@@ -157,15 +156,35 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 
 //		val indices = "spoc,posc,opsc,cspo,csop,cpso,cpos,cosp,cops"
 //		val indices = "spoc".permutations.mkString(",") //all the possible indices
-		val indices = "spoc,posc,ospc,cspo,cpos,cosp"
-		val native = new NativeStore(storageDir.toFile, indices)
-		native.setForceSync(true)
+//		val indices = "spoc,posc,ospc,cspo,cpos,cosp"
+//		val native = new NativeStore(storageDir.toFile, indices)
+//		native.setForceSync(true)
+//
+//		val statsPlugin = new StatsPlugin(system.scheduler)(system.dispatcher)
+//		val store = new MagicTupleFuncSail(Seq(statsPlugin), native)
+//
+//		val repo = new SailRepository(store)
 
-		val statsPlugin = new StatsPlugin(system.scheduler)(system.dispatcher)
-		val store = new MagicTupleFuncSail(Seq(statsPlugin), native)
-
-		val repo = new SailRepository(store)
+		val gdb = new EmbeddedGraphDB(storageDir.toAbsolutePath.toString)
+		val repo = {
+			val id = "icoscp"
+			if(!gdb.hasRepository(id)) gdb.createRepository(id)
+			gdb.getRepository(id)
+		}
 		repo.initialize()
+//		import se.lu.nateko.cp.meta.utils.rdf4j._
+//		repo.accessEagerly{ conn =>
+//			println("connection is " + conn.getClass.toString)
+//			println("Testing conn.getStatements from " + Thread.currentThread.getName)
+//			val ss = conn.getStatements(null, null, null)
+//			val res = ss.hasNext()
+//			ss.close()
+//			println(s"Got $res")
+//		}
+//		println("tested repo eager access from " + Thread.currentThread().getName)
+
+		//TODO Make sure EmbeddedGraphDB is closed
+		//gdb.close()
 		(repo, didNotExist)
 	}
 
@@ -204,7 +223,6 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 	}
 
 	private def makeInstanceServer(initRepo: Repository, conf: InstanceServerConfig, globConf: CpmetaConfig): InstanceServer = {
-
 		val factory = initRepo.getValueFactory
 
 		val writeContexts = conf.writeContexts.map(ctxt => factory.createIRI(ctxt))

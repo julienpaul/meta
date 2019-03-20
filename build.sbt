@@ -35,10 +35,11 @@ lazy val metaCore = (project in file("core"))
 
 val akkaVersion = "2.5.17"
 val akkaHttpVersion = "10.1.5"
-val rdf4jVersion = "2.4.0"
+val rdf4jVersion = "2.4.2"
 
 val noGeronimo = ExclusionRule(organization = "org.apache.geronimo.specs")
 val noJsonLd = ExclusionRule(organization = "com.github.jsonld-java")
+val noGnuTrove = ExclusionRule(organization = "net.sf.trove4j")
 
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
 frontendBuild := {
@@ -59,6 +60,12 @@ lazy val meta = (project in file("."))
 			"com.typesafe.akka"     %% "akka-stream"                        % akkaVersion,
 			"com.typesafe.akka"     %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"         % "logback-classic"                    % "1.1.3",
+			"com.ontotext.graphdb"   % "graphdb-free-runtime"               % "8.8.1",// intransitive(),
+// --- GraphDB dependencies ------------------
+//			"org.eclipse.rdf4j"      % "rdf4j-repository-manager"           % rdf4jVersion,
+//			"io.dropwizard.metrics"  % "metrics-core"                       % "3.1.1",
+//			"net.sf.trove4j"         % "trove4j"                            % "2.0.2",
+// --- end of GraphDB dependencies -----------
 			"org.eclipse.rdf4j"      % "rdf4j-repository-sail"              % rdf4jVersion,
 			"org.eclipse.rdf4j"      % "rdf4j-sail-memory"                  % rdf4jVersion,
 			"org.eclipse.rdf4j"      % "rdf4j-sail-nativerdf"               % rdf4jVersion,
@@ -67,7 +74,7 @@ lazy val meta = (project in file("."))
 			"org.eclipse.rdf4j"      % "rdf4j-queryresultio-text"           % rdf4jVersion,
 			"org.eclipse.rdf4j"      % "rdf4j-queryalgebra-geosparql"       % rdf4jVersion,
 			"org.postgresql"         % "postgresql"                         % "9.4-1201-jdbc41",
-			"net.sourceforge.owlapi" % "org.semanticweb.hermit"             % "1.3.8.510" excludeAll(noGeronimo, noJsonLd),
+			"net.sourceforge.owlapi" % "org.semanticweb.hermit"             % "1.3.8.510" excludeAll(noGeronimo, noJsonLd, noGnuTrove),
 			"org.apache.commons"     % "commons-email"                      % "1.4",
 			"se.lu.nateko.cp"       %% "views-core"                         % "0.4.0-SNAPSHOT",
 			"se.lu.nateko.cp"       %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
