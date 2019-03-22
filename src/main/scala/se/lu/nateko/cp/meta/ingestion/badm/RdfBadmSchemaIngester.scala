@@ -22,7 +22,7 @@ import scala.concurrent.ExecutionContext
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
-class RdfBadmSchemaIngester(schemaFut: => Future[Schema])(implicit ctxt: ExecutionContext, envriConfs: EnvriConfigs) extends Ingester{
+class RdfBadmSchemaIngester(schemaFut: => Future[Schema])(implicit envriConfs: EnvriConfigs) extends Ingester{
 
 	import BadmConsts._
 	implicit private val envri = Envri.ICOS
@@ -33,7 +33,7 @@ class RdfBadmSchemaIngester(schemaFut: => Future[Schema])(implicit ctxt: Executi
 		LocationElevVar, InstrumentVar, VariableVar, VarCodeVar
 	)
 
-	def getStatements(f: ValueFactory): Ingestion.Statements = {
+	def getStatements(f: ValueFactory)(implicit ctxt: ExecutionContext): Ingestion.Statements = {
 		schemaFut.map(mapStatements(f, _))
 	}
 

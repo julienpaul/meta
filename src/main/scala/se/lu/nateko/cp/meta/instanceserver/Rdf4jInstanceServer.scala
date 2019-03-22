@@ -16,7 +16,7 @@ class Rdf4jInstanceServer(repo: Repository, val readContexts: Seq[IRI], val writ
 	def this(repo: Repository, readContext: IRI, writeContext: IRI) = this(repo, Seq(readContext), Seq(writeContext))
 	def this(repo: Repository, contextUri: String) = this(repo, repo.getValueFactory.createIRI(contextUri))
 
-	val factory = repo.getValueFactory
+	def factory = repo.getValueFactory
 
 	def makeNewInstance(prefix: IRI): IRI =
 		factory.createIRI(prefix.stringValue.stripSuffix("/") + "/", UUID.randomUUID.toString)
@@ -48,14 +48,15 @@ class Rdf4jInstanceServer(repo: Repository, val readContexts: Seq[IRI], val writ
 		})
 	)
 
-	def filterNotContainedStatements(stats: TraversableOnce[Statement]): Seq[Statement] = stats.filter{st =>
-		println(s"Checking statement $st from " + Thread.currentThread.getName)
-		repo.accessEagerly{ conn =>
+	def filterNotContainedStatements(stats: TraversableOnce[Statement]): Seq[Statement] = repo.accessEagerly{ conn =>
+println(s"filtering not contained statements on thread ${Thread.currentThread.getName}")
+		stats.filter{st =>
+			println(s"Checking statement $st from " + Thread.currentThread.getName)
 			val res = !conn.hasStatement(st, false, readContexts :_*)
 			println(s"... $res")
 			res
-		}
-	}.toIndexedSeq
+		}.toIndexedSeq
+	}
 
 
 	def writeContextsView = new Rdf4jInstanceServer(repo, writeContexts, writeContexts)

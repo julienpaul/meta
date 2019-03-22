@@ -9,9 +9,9 @@ import se.lu.nateko.cp.meta.utils.rdf4j.Rdf4jIterationIterator
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class SparqlConstructExtractor(pathToQueryRes: String)(implicit ctxt: ExecutionContext) extends Extractor {
+class SparqlConstructExtractor(pathToQueryRes: String) extends Extractor {
 
-	def getStatements(repo: Repository): Ingestion.Statements = Future{
+	def getStatements(repo: Repository)(implicit ctxt: ExecutionContext): Ingestion.Statements = Future{
 		val queryText = IOUtils.toString(getClass.getResourceAsStream(pathToQueryRes), "UTF-8")
 
 		val conn = repo.getConnection

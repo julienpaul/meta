@@ -36,6 +36,7 @@ lazy val metaCore = (project in file("core"))
 val akkaVersion = "2.5.17"
 val akkaHttpVersion = "10.1.5"
 val rdf4jVersion = "2.4.2"
+val graphDbVersion = "8.8.1"
 
 val noGeronimo = ExclusionRule(organization = "org.apache.geronimo.specs")
 val noJsonLd = ExclusionRule(organization = "com.github.jsonld-java")
@@ -60,7 +61,7 @@ lazy val meta = (project in file("."))
 			"com.typesafe.akka"     %% "akka-stream"                        % akkaVersion,
 			"com.typesafe.akka"     %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"         % "logback-classic"                    % "1.1.3",
-			"com.ontotext.graphdb"   % "graphdb-free-runtime"               % "8.8.1",// intransitive(),
+			"com.ontotext.graphdb"   % "graphdb-free-runtime"               % graphDbVersion,// intransitive(),
 // --- GraphDB dependencies ------------------
 //			"org.eclipse.rdf4j"      % "rdf4j-repository-manager"           % rdf4jVersion,
 //			"io.dropwizard.metrics"  % "metrics-core"                       % "3.1.1",
@@ -75,6 +76,7 @@ lazy val meta = (project in file("."))
 			"org.eclipse.rdf4j"      % "rdf4j-queryalgebra-geosparql"       % rdf4jVersion,
 			"org.postgresql"         % "postgresql"                         % "9.4-1201-jdbc41",
 			"net.sourceforge.owlapi" % "org.semanticweb.hermit"             % "1.3.8.510" excludeAll(noGeronimo, noJsonLd, noGnuTrove),
+			"net.sf.trove4j"         % "trove4j3"                           % "3.0.3", //gnu trove, published manually under different name
 			"org.apache.commons"     % "commons-email"                      % "1.4",
 			"se.lu.nateko.cp"       %% "views-core"                         % "0.4.0-SNAPSHOT",
 			"se.lu.nateko.cp"       %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
@@ -84,6 +86,11 @@ lazy val meta = (project in file("."))
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.meta",
 
 		scalacOptions += "-Ywarn-unused-import:false",
+
+		assemblyShadeRules in assembly := Seq(
+			ShadeRule.rename("gnu.trove.**" -> "shade.@0").inLibrary("com.ontotext.graphdb" % "graphdb-free-runtime" % graphDbVersion),
+			ShadeRule.rename("gnu.trove.**" -> "shade.@0").inLibrary("net.sf.trove4j" % "trove4j" % "2.0.2")
+		),
 
 		assemblyMergeStrategy in assembly := {
 			case PathList("META-INF", "axiom.xml") => MergeStrategy.first

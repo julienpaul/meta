@@ -15,10 +15,10 @@ import se.lu.nateko.cp.meta.utils.rdf4j._
 class IcosStationsIngester(
 	sparqlPath: String,
 	extraStationsPath: String
-)(implicit ctxt: ExecutionContext, envriConfs: EnvriConfigs) extends Extractor{
+)(implicit envriConfs: EnvriConfigs) extends Extractor{
 	import IcosStationsIngester._
 
-	def getStatements(repo: Repository): Ingestion.Statements =
+	def getStatements(repo: Repository)(implicit ctxt: ExecutionContext): Ingestion.Statements =
 		new SparqlConstructExtractor(sparqlPath).getStatements(repo).map{own =>
 			val stationListInput = getClass.getResourceAsStream(extraStationsPath)
 

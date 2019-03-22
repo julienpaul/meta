@@ -1,18 +1,19 @@
 package se.lu.nateko.cp.meta.utils.rdf4j
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import scala.collection.AbstractIterator
 
 import org.eclipse.rdf4j.common.iteration.CloseableIteration
+
 import se.lu.nateko.cp.meta.api.CloseableIterator
 
 
-//TODO Make this thread-safe ?
 class Rdf4jIterationIterator[T](res: CloseableIteration[T, _], closer: () => Unit = () => ()) extends AbstractIterator[T] with CloseableIterator[T]{
 
-	private[this] var closed: Boolean = false
+	private[this] val closed = new AtomicBoolean()
 
-	def close(): Unit = if(!closed){
-		closed = true;
+	def close(): Unit = if(!closed.getAndSet(true)){
 		try{
 			res.close()
 		} finally {
@@ -20,7 +21,7 @@ class Rdf4jIterationIterator[T](res: CloseableIteration[T, _], closer: () => Uni
 		}
 	}
 
-	def hasNext: Boolean = !closed && {
+	def hasNext: Boolean = !closed.get && {
 		try{
 			val has = res.hasNext()
 			if(!has) close()

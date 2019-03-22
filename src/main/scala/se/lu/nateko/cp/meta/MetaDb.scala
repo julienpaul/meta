@@ -97,8 +97,10 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 
 		validateConfig(config0)
 
-		val exeServ = java.util.concurrent.Executors.newSingleThreadExecutor
-		implicit val ctxt = ExecutionContext.fromExecutorService(exeServ)
+		//val exeServ = java.util.concurrent.Executors.newSingleThreadExecutor
+		//implicit val ctxt = ExecutionContext.fromExecutorService(exeServ)
+		//log.info(s"Made single-thread-backed context $ctxt")
+		import system.dispatcher
 		implicit val _ = config0.core.envriConfigs
 
 		val ontosFut = Future{makeOntos(config0.onto.ontologies)}(system.dispatcher)
@@ -137,7 +139,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 
 		metaDbFut.andThen{
 			case _ =>
-				ctxt.shutdown()
+				//ctxt.shutdown()
 				log.info("instance servers created")
 		}(system.dispatcher)
 
@@ -172,17 +174,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 			gdb.getRepository(id)
 		}
 		repo.initialize()
-//		import se.lu.nateko.cp.meta.utils.rdf4j._
-//		repo.accessEagerly{ conn =>
-//			println("connection is " + conn.getClass.toString)
-//			println("Testing conn.getStatements from " + Thread.currentThread.getName)
-//			val ss = conn.getStatements(null, null, null)
-//			val res = ss.hasNext()
-//			ss.close()
-//			println(s"Got $res")
-//		}
-//		println("tested repo eager access from " + Thread.currentThread().getName)
-
+		log.info("Repo initialized by thread " + Thread.currentThread.getName)
 		//TODO Make sure EmbeddedGraphDB is closed
 		//gdb.close()
 		(repo, didNotExist)
@@ -296,6 +288,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 		config: CpmetaConfig
 	)(implicit ctxt: ExecutionContext): Future[Map[String, InstanceServer]] = {
 
+		log.info(s"Making instance servers in exe context ${ctxt}")
 		val instServerConfs = getAllInstanceServerConfigs(config.instanceServers)
 		val valueFactory = repo.getValueFactory
 		lazy val providers = providersFactory
@@ -306,7 +299,10 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 			val servConf: InstanceServerConfig = instServerConfs(id)
 
 			val basicInit = {
-				val init = Future{makeInstanceServer(repo, servConf, config)}
+				val init = Future{
+					log.info(s"Starting basic init for instance server $id on thread ${Thread.currentThread.getName}")
+					makeInstanceServer(repo, servConf, config)
+				}
 
 				if(id == config.instanceServers.otcMetaInstanceServerId)
 					init.map(new WriteNotifyingInstanceServer(_))
@@ -329,6 +325,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 					val afterIngestion = for(
 						server <- basicInit;
 						_ <- dependenciesDone;
+						_ = log.info(s"basic init and dependencies done for $id on ${Thread.currentThread.getName}");
 						_ <- providers(ingesterId) match {
 							case ingester: Ingester => Ingestion.ingest(server, ingester, valueFactory)
 							case extractor: Extractor => Ingestion.ingest(server, extractor, repo)
@@ -338,7 +335,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 						server
 					}
 
-					log.info("ingestion scheduled for " + id)
+					log.info(s"ingestion scheduled for $id on thread ${Thread.currentThread.getName}")
 					withDependencies + (id -> afterIngestion)
 				case _ =>
 					acc + (id -> basicInit)

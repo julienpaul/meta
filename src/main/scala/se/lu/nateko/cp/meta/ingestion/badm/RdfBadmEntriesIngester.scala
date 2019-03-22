@@ -25,7 +25,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 class RdfBadmEntriesIngester(
 		entriesFut: => Future[Iterable[BadmEntry]],
 		schema: => Future[Schema]
-)(implicit ctxt: ExecutionContext, envriConfs: EnvriConfigs) extends Ingester{
+)(implicit envriConfs: EnvriConfigs) extends Ingester{
 
 	import RdfBadmEntriesIngester._
 	implicit private val envri = Envri.ICOS
@@ -38,7 +38,7 @@ class RdfBadmEntriesIngester(
 
 	private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
-	def getStatements(f: ValueFactory): Ingestion.Statements = {
+	def getStatements(f: ValueFactory)(implicit ctxt: ExecutionContext): Ingestion.Statements = {
 		implicit val vocab = new CpVocab(f)
 		implicit val metaVocab = new CpmetaVocab(f)
 		implicit val badmVocab = new BadmVocab(f)

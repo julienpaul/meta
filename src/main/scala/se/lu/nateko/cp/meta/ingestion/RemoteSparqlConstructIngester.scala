@@ -24,12 +24,11 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.StreamConverters
 import se.lu.nateko.cp.meta.utils.rdf4j.EnrichedJavaUri
 import akka.stream.Materializer
+import scala.concurrent.ExecutionContext
 
 class RemoteRdfGraphIngester(endpoint: URI, rdfGraph: URI)(implicit system: ActorSystem, m: Materializer) extends Ingester{
 
-	import system.dispatcher
-
-	override def getStatements(factory: ValueFactory): Ingestion.Statements = {
+	override def getStatements(factory: ValueFactory)(implicit ctxt: ExecutionContext): Ingestion.Statements = {
 		makeQuery().flatMap(
 			resp => resp.status match {
 				case StatusCodes.OK =>

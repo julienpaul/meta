@@ -9,11 +9,11 @@ import scala.concurrent.ExecutionContext
 
 
 //TODO Consider rewriting using a parser only, without loading all statements into memory
-class RdfFileIngester(resourcePath: String, format: RDFFormat)(implicit ctxt: ExecutionContext) extends Ingester{
+class RdfFileIngester(resourcePath: String, format: RDFFormat) extends Ingester{
 
 	private[this] val baseUri = "http://dummy.org"
 
-	def getStatements(valueFactory: ValueFactory): Ingestion.Statements = Future{
+	def getStatements(valueFactory: ValueFactory)(implicit ctxt: ExecutionContext): Ingestion.Statements = Future{
 
 		val repo = Loading.fromResource(resourcePath, baseUri, format)
 
@@ -25,4 +25,4 @@ class RdfFileIngester(resourcePath: String, format: RDFFormat)(implicit ctxt: Ex
 	}
 }
 
-class RdfXmlFileIngester(resourcePath: String)(implicit ctxt: ExecutionContext) extends RdfFileIngester(resourcePath, RDFFormat.RDFXML)
+class RdfXmlFileIngester(resourcePath: String) extends RdfFileIngester(resourcePath, RDFFormat.RDFXML)
