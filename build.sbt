@@ -35,8 +35,8 @@ lazy val metaCore = (project in file("core"))
 
 val akkaVersion = "2.5.17"
 val akkaHttpVersion = "10.1.5"
-val rdf4jVersion = "2.4.2"
-val graphDbVersion = "8.8.1"
+val rdf4jVersion = "2.4.6"
+val graphDbVersion = "8.9.0"
 
 val noGeronimo = ExclusionRule(organization = "org.apache.geronimo.specs")
 val noJsonLd = ExclusionRule(organization = "com.github.jsonld-java")

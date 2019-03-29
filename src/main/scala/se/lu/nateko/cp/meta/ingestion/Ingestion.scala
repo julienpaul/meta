@@ -88,9 +88,9 @@ println(s"Applied ${updates.length} updates!")
 
 	private def computeDiff(from: InstanceServer, to: InstanceServer): Seq[RdfUpdate] = {
 println(s"About to compute statements to be removed on thread ${Thread.currentThread.getName}")
-		val toRemove = Nil//to.filterNotContainedStatements(from.getStatements(None, None, None))
+		val toRemove = to.filterNotContainedStatements(from.getStatements(None, None, None))
 println(s"About to compute statements to be added...")
-		val toAdd = to.getStatements(None, None, None).toIndexedSeq//from.filterNotContainedStatements(to.getStatements(None, None, None).toIndexedSeq)
+		val toAdd = from.filterNotContainedStatements(to.getStatements(None, None, None))
 println(s"Diff computation finished!")
 
 		toRemove.map(RdfUpdate(_, false)) ++ toAdd.map(RdfUpdate(_, true))

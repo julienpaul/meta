@@ -1,10 +1,10 @@
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 construct{
-	?dobj cpmeta:hasObjectSpec ?spec
+	?prod rdfs:comment ?comm .
 }
-from <http://meta.icos-cp.eu/resources/socat/>
+from <http://meta.icos-cp.eu/resources/ecocsv/>
 where{
-	?dobj a cpmeta:DataObject .
-	?dobj cpmeta:hasObjectSpec ?spec .
-	FILTER(?spec != <http://meta.icos-cp.eu/resources/cpmeta/socat_DataObject>)
+	?prod a cpmeta:DataProduction .
+	?prod rdfs:comment ?comm .
+	filter(contains(?comm, "r>"))
 }
