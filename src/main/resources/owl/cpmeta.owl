@@ -1342,12 +1342,6 @@
         <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Entity"/>
         <rdfs:subClassOf>
             <owl:Restriction>
-                <owl:onProperty rdf:resource="http://meta.icos-cp.eu/ontologies/cpmeta/isNextVersionOf"/>
-                <owl:allValuesFrom rdf:resource="http://meta.icos-cp.eu/ontologies/cpmeta/Collection"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
                 <owl:onProperty rdf:resource="http://purl.org/dc/terms/hasPart"/>
                 <owl:allValuesFrom>
                     <owl:Class>
@@ -1411,12 +1405,6 @@
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://meta.icos-cp.eu/ontologies/cpmeta/wasSubmittedBy"/>
                 <owl:someValuesFrom rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://meta.icos-cp.eu/ontologies/cpmeta/isNextVersionOf"/>
-                <owl:allValuesFrom rdf:resource="http://meta.icos-cp.eu/ontologies/cpmeta/DataObject"/>
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>

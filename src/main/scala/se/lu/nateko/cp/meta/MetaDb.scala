@@ -39,6 +39,7 @@ import se.lu.nateko.cp.meta.services.sparql.magic.MagicTupleFuncSail
 import se.lu.nateko.cp.meta.services.sparql.magic.stats.StatsPlugin
 import se.lu.nateko.cp.meta.instanceserver.WriteNotifyingInstanceServer
 import com.ontotext.graphdb.example.util.EmbeddedGraphDB
+import org.eclipse.rdf4j.repository.base.RepositoryWrapper
 
 class MetaDb (
 	val instanceServers: Map[String, InstanceServer],
@@ -97,10 +98,9 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 
 		validateConfig(config0)
 
-		//val exeServ = java.util.concurrent.Executors.newSingleThreadExecutor
-		//implicit val ctxt = ExecutionContext.fromExecutorService(exeServ)
-		//log.info(s"Made single-thread-backed context $ctxt")
-		import system.dispatcher
+		val exeServ = java.util.concurrent.Executors.newSingleThreadExecutor
+		implicit val ctxt = ExecutionContext.fromExecutorService(exeServ)
+		//import system.dispatcher
 		implicit val _ = config0.core.envriConfigs
 
 		val ontosFut = Future{makeOntos(config0.onto.ontologies)}(system.dispatcher)
@@ -139,7 +139,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 
 		metaDbFut.andThen{
 			case _ =>
-				//ctxt.shutdown()
+				ctxt.shutdown()
 				log.info("instance servers created")
 		}(system.dispatcher)
 
@@ -168,15 +168,18 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 //		val repo = new SailRepository(store)
 
 		val gdb = new EmbeddedGraphDB(storageDir.toAbsolutePath.toString)
-		val repo = {
+		val repo = new RepositoryWrapper(){
+			override def shutDown(): Unit = {
+				try{super.shutDown()}
+				finally{gdb.close()}
+			}
+		}
+		repo.setDelegate{
 			val id = "icoscp"
 			if(!gdb.hasRepository(id)) gdb.createRepository(id)
 			gdb.getRepository(id)
 		}
 		repo.initialize()
-		log.info("Repo initialized by thread " + Thread.currentThread.getName)
-		//TODO Make sure EmbeddedGraphDB is closed
-		//gdb.close()
 		(repo, didNotExist)
 	}
 
@@ -325,7 +328,7 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 					val afterIngestion = for(
 						server <- basicInit;
 						_ <- dependenciesDone;
-						_ = log.info(s"basic init and dependencies done for $id on ${Thread.currentThread.getName}");
+						_ = log.info(s"basic init and dependencies done for $id on ${Thread.currentThread.getName}, starting ingestion");
 						_ <- providers(ingesterId) match {
 							case ingester: Ingester => Ingestion.ingest(server, ingester, valueFactory)
 							case extractor: Extractor => Ingestion.ingest(server, extractor, repo)

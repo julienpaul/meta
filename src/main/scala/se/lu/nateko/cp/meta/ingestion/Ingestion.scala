@@ -68,7 +68,6 @@ object Ingestion {
 			target: InstanceServer,
 			provider: T, stFactory: T => Statements
 	)(implicit ctxt: ExecutionContext): Future[Unit] = stFactory(provider).map{newStatements =>
-println(s"ingesting into ${target.writeContexts.head} on thread ${Thread.currentThread.getName}")
 		if(provider.isAppendOnly){
 			val toAdd = target.filterNotContainedStatements(newStatements).map(RdfUpdate(_, true))
 			target.applyAll(toAdd)
@@ -76,23 +75,17 @@ println(s"ingesting into ${target.writeContexts.head} on thread ${Thread.current
 			val newRepo = Loading.fromStatements(newStatements)
 			val source = new Rdf4jInstanceServer(newRepo)
 			try{
-				val updates = computeDiff(target.writeContextsView, source).toIndexedSeq
-println(s"About to apply ${updates.length} updates...")
+				val updates = computeDiff(target.writeContextsView, source)
 				target.applyAll(updates)
-println(s"Applied ${updates.length} updates!")
 			}finally{
 				source.shutDown()
 			}
 		}
 	}
 
-	private def computeDiff(from: InstanceServer, to: InstanceServer): Seq[RdfUpdate] = {
-println(s"About to compute statements to be removed on thread ${Thread.currentThread.getName}")
+	private def computeDiff(from: InstanceServer, to: InstanceServer): IndexedSeq[RdfUpdate] = {
 		val toRemove = to.filterNotContainedStatements(from.getStatements(None, None, None))
-println(s"About to compute statements to be added...")
 		val toAdd = from.filterNotContainedStatements(to.getStatements(None, None, None))
-println(s"Diff computation finished!")
-
 		toRemove.map(RdfUpdate(_, false)) ++ toAdd.map(RdfUpdate(_, true))
 	}
 

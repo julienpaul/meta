@@ -48,7 +48,7 @@ class Rdf4jInstanceServer(repo: Repository, val readContexts: Seq[IRI], val writ
 		})
 	)
 
-	def filterNotContainedStatements(stats: TraversableOnce[Statement]): Seq[Statement] = repo.accessEagerly{ conn =>
+	def filterNotContainedStatements(stats: TraversableOnce[Statement]): IndexedSeq[Statement] = repo.accessEagerly{ conn =>
 		stats.filter{st => !conn.hasStatement(st, false, readContexts :_*)}.toIndexedSeq
 	}
 
