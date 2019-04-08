@@ -61,7 +61,7 @@ lazy val meta = (project in file("."))
 			"com.typesafe.akka"     %% "akka-stream"                        % akkaVersion,
 			"com.typesafe.akka"     %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"         % "logback-classic"                    % "1.1.3",
-			"com.ontotext.graphdb"   % "graphdb-free-runtime"               % graphDbVersion,// intransitive(),
+			"com.ontotext.graphdb"   % "graphdb-standard-runtime"           % graphDbVersion,// intransitive(),
 // --- GraphDB dependencies ------------------
 //			"org.eclipse.rdf4j"      % "rdf4j-repository-manager"           % rdf4jVersion,
 //			"io.dropwizard.metrics"  % "metrics-core"                       % "3.1.1",
@@ -88,7 +88,7 @@ lazy val meta = (project in file("."))
 		scalacOptions += "-Ywarn-unused-import:false",
 
 		assemblyShadeRules in assembly := Seq(
-			ShadeRule.rename("gnu.trove.**" -> "shade.@0").inLibrary("com.ontotext.graphdb" % "graphdb-free-runtime" % graphDbVersion),
+			ShadeRule.rename("gnu.trove.**" -> "shade.@0").inLibrary("com.ontotext.graphdb" % "graphdb-standard-runtime" % graphDbVersion),
 			ShadeRule.rename("gnu.trove.**" -> "shade.@0").inLibrary("net.sf.trove4j" % "trove4j" % "2.0.2")
 		),
 

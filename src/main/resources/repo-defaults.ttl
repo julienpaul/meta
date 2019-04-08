@@ -11,9 +11,9 @@
 #    rep:repositoryID "" ;
 #    rdfs:label "" ;
     rep:repositoryImpl [
-        rep:repositoryType "graphdb:FreeSailRepository" ;
+        rep:repositoryType "owlim:MonitorRepository" ;
         sr:sailImpl [
-            sail:sailType "graphdb:FreeSail" ;
+            sail:sailType "owlim:Sail" ;
        
             owlim:base-URL "http://example.ontotext.com/graphdb#" ;
             owlim:defaultNS "" ;
