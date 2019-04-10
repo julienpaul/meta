@@ -42,6 +42,7 @@ import se.lu.nateko.cp.meta.services.sparql.magic.stats.StatsPlugin
 import se.lu.nateko.cp.meta.services.upload.{ DataObjectInstanceServers, UploadService }
 import se.lu.nateko.cp.meta.services.upload.etc.EtcUploadTransformer
 import se.lu.nateko.cp.meta.utils.rdf4j.EnrichedValueFactory
+import org.eclipse.rdf4j.repository.base.RepositoryWrapper
 
 
 class MetaDb (
@@ -159,18 +160,35 @@ class MetaDbFactory(implicit system: ActorSystem, mat: Materializer) {
 			Files.walk(storageDir).filter(Files.isRegularFile(_)).forEach(Files.delete)
 		}
 
-//		val indices = "spoc,posc,opsc,cspo,csop,cpso,cpos,cosp,cops"
-//		val indices = "spoc".permutations.mkString(",") //all the possible indices
-		val indices = "spoc,posc,ospc,cspo,cpos,cosp"
-		val native = new NativeStore(storageDir.toFile, indices)
-		native.setForceSync(true)
+		import com.complexible.stardog.Stardog
+		import com.complexible.stardog.api.admin.AdminConnection
+		import com.complexible.stardog.api.admin.AdminConnectionConfiguration
+		import com.complexible.stardog.db.DatabaseOptions
+		import com.complexible.stardog.rdf4j.StardogRepository
+		val dog = Stardog.builder.create()
+		val admConn = AdminConnectionConfiguration.toEmbeddedServer.credentials("admin", "admin").connect()
+		try{
+			val connConf = admConn.newDatabase("rdfStorage")
+				.set[java.lang.Boolean](DatabaseOptions.QUERY_ALL_GRAPHS, true)
+				.create()
 
-		val statsPlugin = new StatsPlugin(system.scheduler)(system.dispatcher)
-		val store = new MagicTupleFuncSail(Seq(statsPlugin), native)
+			val repo = new RepositoryWrapper(new StardogRepository(connConf)){
+				override def shutDown(): Unit = {
+					super.shutDown()
+					dog.shutdown()
+				}
+			}
 
-		val repo = new SailRepository(store)
-		repo.initialize()
-		(repo, didNotExist)
+			repo.initialize()
+			(repo, didNotExist)
+		} catch{
+			case err: Throwable =>
+				dog.shutdown()
+				throw err
+		} finally{
+			admConn.close()
+		}
+
 	}
 
 	private def makeUploadService(
